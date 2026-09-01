@@ -1,14 +1,15 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tanya AI Groq</title>
+  <title>Tanya AI</title>
   <style>
     body { font-family: sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
-    input, textarea, select { width: 100%; margin: 8px 0; padding: 10px; box-sizing: border-box; }
+    input, textarea { width: 100%; margin: 8px 0; padding: 10px; box-sizing: border-box; }
     button { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; }
-    #output { margin-top: 15px; padding: 12px; background: #f3f4f6; border-radius: 5px; white-space: pre-wrap; word-break: break-word; }
+    #output { margin-top: 15px; padding: 12px; background: #f3f4f6; border-radius: 5px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
@@ -17,13 +18,6 @@
   
   <label>Groq API Key:</label>
   <input type="password" id="apiKey" placeholder="Masukkan gsk_...">
-
-  <label>Pilih Model AI:</label>
-  <select id="modelSelect">
-    <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Cepat)</option>
-    <option value="llama3-8b-8192">llama3-8b-8192 (Stabil)</option>
-    <option value="mixtral-8x7b-32768">mixtral-8x7b-32768 (Alternatif)</option>
-  </select>
 
   <label>Pertanyaan:</label>
   <textarea id="prompt" placeholder="Ketik pesan..."></textarea>
@@ -34,16 +28,11 @@
 
   <script>
     async function kirim() {
-      // Membersihkan karakter aneh dan spasi dari API Key
-      let key = document.getElementById('apiKey').value;
-      key = key.replace(/[^\x00-\x7F]/g, "").trim(); 
-      
+      const key = document.getElementById('apiKey').value.trim();
       const text = document.getElementById('prompt').value.trim();
-      const selectedModel = document.getElementById('modelSelect').value;
       const out = document.getElementById('output');
 
-      if (!key) return alert("API Key kosong atau mengandung karakter ilegal!");
-      if (!text) return alert("Ketik pertanyaanmu dulu!");
+      if (!key || !text) return alert("Isi API Key dan Pertanyaan!");
 
       out.innerText = "Sedang memproses...";
 
@@ -55,7 +44,7 @@
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: selectedModel,
+            model: "openai/gpt-oss-20b",
             messages: [{ role: "user", content: text }]
           })
         });
@@ -65,7 +54,7 @@
         if (data.choices && data.choices[0]) {
           out.innerText = data.choices[0].message.content;
         } else if (data.error) {
-          out.innerText = "Error API: " + data.error.message;
+          out.innerText = "Error: " + data.error.message;
         } else {
           out.innerText = "Terjadi kesalahan tidak diketahui.";
         }

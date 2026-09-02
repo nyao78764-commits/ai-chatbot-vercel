@@ -62,7 +62,31 @@
         out.innerText = "Error Koneksi: " + err.message;
       }
     }
-  </script>
+  <script>
+    let history = [
+  { role: "system", content: "Kamu adalah asisten AI yang ramah, pintar, dan berbahasa Indonesia." }
+];
+    // A. Memasukkan pesan kamu ke memori
+history.push({ role: "user", content: text });
 
+// B. Mengirim seluruh array history ke Groq
+const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  method: "POST",
+  headers: { ... },
+  body: JSON.stringify({
+    model: "openai/gpt-oss-20b" ,
+    messages: history // <-- Kirim semua riwayat di sini
+  })
+});
+
+// C. Memasukkan jawaban AI ke memori
+history.push({ role: "assistant", content: aiReply });
+function resetChat() {
+  // 1. Mengembalikan array history ke kondisi awal
+  history = [{ role: "system", content: "Kamu adalah asisten AI yang ramah, pintar, dan berbahasa Indonesia." }];
+  
+  // 2. Membersihkan tampilan di layar web
+  document.getElementById('chat-box').innerHTML = '<div class="msg assistant">AI: Riwayat obrolan direset. Ada yang bisa dibantu lagi?</div>';
+}
 </body>
 </html>

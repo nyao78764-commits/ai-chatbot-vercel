@@ -79,14 +79,5 @@ const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
   })
 });
 
-// C. Memasukkan jawaban AI ke memori
-history.push({ role: "assistant", content: aiReply });
-function resetChat() {
-  // 1. Mengembalikan array history ke kondisi awal
-  history = [{ role: "system", content: "Kamu adalah asisten AI yang ramah, pintar, dan berbahasa Indonesia." }];
-  
-  // 2. Membersihkan tampilan di layar web
-  document.getElementById('chat-box').innerHTML = '<div class="msg assistant">AI: Riwayat obrolan direset. Ada yang bisa dibantu lagi?</div>';
-}
 </body>
 </html>

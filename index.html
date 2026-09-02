@@ -8,34 +8,59 @@
     body { font-family: sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
     input, textarea { width: 100%; margin: 8px 0; padding: 10px; box-sizing: border-box; }
     button { width: 100%; padding: 10px; background: #2563eb; color: white; border: none; font-weight: bold; cursor: pointer; }
-    #output { margin-top: 15px; padding: 12px; background: #f3f4f6; border-radius: 5px; white-space: pre-wrap; }
+    #chat-box { margin-top: 15px; padding: 12px; background: #f3f4f6; border-radius: 5px; max-height: 400px; overflow-y: auto; }
+    .msg { margin-bottom: 10px; padding: 8px; border-radius: 5px; white-space: pre-wrap; }
+    .user { background: #dbeafe; font-weight: bold; }
+    .assistant { background: #ffffff; border: 1px solid #e5e7eb; }
   </style>
 </head>
 <body>
 
-  <h2>🤖 Tanya AI Groq</h2>
+  <h2>🤖 Tanya AI Groq (Chat Nyambung)</h2>
   
   <label>Groq API Key:</label>
   <input type="password" id="apiKey" placeholder="Masukkan gsk_...">
 
+  <div id="chat-box">
+    <div class="msg assistant">AI: Halo! Mau bahas apa kita hari ini?</div>
+  </div>
+
   <label>Pertanyaan:</label>
   <textarea id="prompt" placeholder="Ketik pesan..."></textarea>
 
-  <button onclick="kirim()">Kirim Pesan</button>
-
-  <div id="output">Jawaban akan muncul di sini...</div>
+  <button id="btn" onclick="kirim()">Kirim Pesan</button>
+  <button onclick="resetChat()" style="background: #ef4444; margin-top: 5px;">Hapus Riwayat Chat</button>
 
   <script>
+    // Variable array untuk menyimpan seluruh riwayat percakapan
+    let history = [
+      { role: "system", content: "Kamu adalah asisten AI yang ramah, pintar, dan berbahasa Indonesia." }
+    ];
+
     async function kirim() {
       const key = document.getElementById('apiKey').value.trim();
       const text = document.getElementById('prompt').value.trim();
-      const out = document.getElementById('output');
+      const chatBox = document.getElementById('chat-box');
+      const btn = document.getElementById('btn');
 
       if (!key || !text) return alert("Isi API Key dan Pertanyaan!");
 
-      out.innerText = "Sedang memproses...";
+      // 1. Tampilkan pesan user di UI
+      chatBox.innerHTML += `<div class="msg user">Kamu: ${text}</div>`;
+      document.getElementById('prompt').value = ""; // Kosongkan input
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // 2. Simpan pesan user ke dalam riwayat
+      history.push({ role: "user", content: text });
+
+      btn.disabled = true;
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'msg assistant';
+      loadingDiv.innerText = 'AI: Sedang berpikir...';
+      chatBox.appendChild(loadingDiv);
 
       try {
+        // 3. Kirim SELURUH array history ke Groq API
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -44,22 +69,35 @@
           },
           body: JSON.stringify({
             model: "openai/gpt-oss-20b",
-            messages: [{ role: "user", content: text }]
+            messages: history
           })
         });
 
         const data = await res.json();
 
         if (data.choices && data.choices[0]) {
-          out.innerText = data.choices[0].message.content;
+          const aiReply = data.choices[0].message.content;
+          
+          // 4. Simpan balasan AI ke riwayat agar percakapan selanjutnya tetap nyambung
+          history.push({ role: "assistant", content: aiReply });
+          
+          loadingDiv.innerText = "AI: " + aiReply;
         } else if (data.error) {
-          out.innerText = "Error: " + data.error.message;
-        } else {
-          out.innerText = "Terjadi kesalahan tidak diketahui.";
+          loadingDiv.innerText = "Error: " + data.error.message;
+          history.pop(); // Hapus pesan terakhir dari riwayat jika gagal
         }
       } catch (err) {
-        out.innerText = "Error Koneksi: " + err.message;
+        loadingDiv.innerText = "Error Koneksi: " + err.message;
+        history.pop();
+      } finally {
+        btn.disabled = false;
+        chatBox.scrollTop = chatBox.scrollHeight;
       }
+    }
+
+    function resetChat() {
+      history = [{ role: "system", content: "Kamu adalah asisten AI yang ramah, pintar, dan berbahasa Indonesia." }];
+      document.getElementById('chat-box').innerHTML = '<div class="msg assistant">AI: Riwayat obrolan direset. Ada yang bisa dibantu lagi?</div>';
     }
   </script>
 
